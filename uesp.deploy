@@ -1,0 +1,18 @@
+
+name = uesp.wikipopularpages
+description = MediaWiki extension for displaying popular page data.
+backup = false
+verbosity = 0
+
+	# Staging is important as the APC cache randomly breaks if you try
+	# to update the files in place.
+staged = true
+
+ignore = *.deploy
+ignore = .hg*
+
+dest = content1.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
+dest = content2.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
+dest = content3.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
+
+
