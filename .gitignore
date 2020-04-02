@@ -1,4 +1,3 @@
-syntax: glob
 *.log
 *.secrets
 test*
