@@ -100,7 +100,7 @@ class RecentPopularPagesPage extends SpecialPage
 			$title = Title::newFromText($name, 0);
 			
 			if ($title)
-				$wikiText .= "<li>[[$name]] has $count views</li>";
+				$wikiText .= "<li>[[:$name]] has $count views</li>";
 			else
 				$wikiText .= "<li>$name has $count views</li>";			
 			

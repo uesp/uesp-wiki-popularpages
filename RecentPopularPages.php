@@ -1,13 +1,4 @@
 <?php
-/*
- * MediaWiki Extension: RecentPopularPages
- * 
- * TODO
- * 	- Language seperation.
- *  - History or different time periods.
- *  - Namespace summary   
- */
-
 # Confirm it's being called from a valid entry point; skip unless MEDIAWIKI is defined
 if (!defined('MEDIAWIKI')) {
         echo <<<EOT

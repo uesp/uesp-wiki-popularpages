@@ -1,18 +1,18 @@
-
-name = uesp.wikipopularpages
-description = MediaWiki extension for displaying popular page data.
+name = uesp.wikirecentpopularpages
+description = MediaWiki extension for showing pages that are recently popular.
+repository = https://github.com/uesp/uesp-wiki-recentpopularpages
 backup = false
 verbosity = 0
 
-	# Staging is important as the APC cache randomly breaks if you try
-	# to update the files in place.
 staged = true
 
 ignore = *.deploy
 ignore = .hg*
+ignore = .git*
 
 dest = content1.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
 dest = content2.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
 dest = content3.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
-
+destname = [backup]backup1.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
+destname = [dev]content3.uesp.net:/home/uesp/dev/www/w/extensions/RecentPopularPages/
 
