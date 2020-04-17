@@ -1,0 +1,32 @@
+#!/bin/sh
+
+LOGFILE="/var/log/squid/access.log"
+OUTPUTPATH="/home/uesp/pagecounts"
+OUTPUTFILE="squidpagecounts.txt"
+TIMEFILE="squidpagetime.txt"
+NUMLINES="1000000"
+
+if [ ! -f "$LOGFILE" ]; then
+    echo "Squid log file not found!"
+    exit 1
+fi
+
+tail -n "$NUMLINES" "$LOGFILE" | grep /200 | awk '{print $7}' | grep "uesp.net/wiki/" \
+	| sed -e 's/http.*uesp\.net\/wiki\///' -e 's/_/ /g' -e 's/\?$//' -e 's/\/$//' \
+	| php -R 'echo urldecode($argn) . "\n";' \
+	| sort | uniq -c | sort -nr > "$OUTPUTPATH/$OUTPUTFILE"
+	
+	
+STARTTIME=`tail -n "$NUMLINES" "$LOGFILE" | head -n1 | awk '{print $1}' `
+NOWTIME=`date +%s`
+#TOTALSECONDS=`expr $NOWTIME - $STARTTIME`
+TOTALSECONDS=`bc <<< "$NOWTIME-$STARTTIME"`
+echo "$TOTALSECONDS" > "$OUTPUTPATH/$TIMEFILE"
+ 
+ 
+ TODAY=`date +%Y-%m-%d-%H`
+ 
+ cp -f "$OUTPUTPATH/$OUTPUTFILE" "$OUTPUTPATH/$OUTPUTFILE.$TODAY"
+ cp -f "$OUTPUTPATH/$TIMEFILE" "$OUTPUTPATH/$TIMEFILE.$TODAY"
+ 
+ echo "Parsed page counts from $NUMLINES lines of Squid log file representing the last $TOTALSECONDS seconds!"

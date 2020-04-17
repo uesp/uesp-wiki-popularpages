@@ -1,0 +1,43 @@
+
+RecentPopularPages
+Dave Humphrey (dave@uesp.net)
+
+This is a simple MediaWiki extension created specifically for the UESP.net wiki to display a list of
+wiki pages sorted by number of hits in the past few hours. This extension only displays the list...the 
+actual collection of data is a multi-step process handled externally.
+
+The basic steps are:
+
+	1. Web server logs to an Apache format log file.
+	2. Script parses log file to collect page counts.
+	3. Another script saves page counts to a custom wiki table in the database.
+	4. This extension reads table and outputs results. 
+
+A general setup guide is listed below.
+
+ - Turn on logging in your Apache/Squid/Varnish/Lighttpd/Nginx/... web server. It can be any format but
+   the example scripts use an Apache log compatible format. Technically it just needs to list the page
+   name/URL and have a timestamp.
+ - Setup a script to parse the log files (see scripts/uesp-squidlogpagecounts for an example). This script
+   should output 2 files.
+       1. pagecounts.txt holds 2 columns of data seperated by a space. First column is an integer and 
+          second column is the wiki page name. For example:
+          
+              3058 Main Page
+               816 Skyrim:Skyrim
+               737 Special:RecentChanges
+               540 Skyrim:Quests
+               ...
+               
+       2. pagetime.txt holds a single number which represents the number of seconds the pagecounts.txt 
+          data represents.
+ - The script should parse several hours or days of logs to give a reasonable sample size. For a very busy
+   wiki several hours would be enough. For a less busy one several days/weeks of logs may be needed.
+ - Setup a script to read the pagecounts.txt file and insert them into the wiki.popularPageCounts table
+   (see scripts/uesp-savesquidpagecounts.php for an example).
+ - Install the extension as any other MediaWiki extension by adding a line:
+       wfLoadExtension( "UespShortLinks" );
+   to your LocalSettings.php file.
+ - Test extension by visiting https://en.uesp.net/wiki/Special:RecentPopularPages on your wiki. Remember
+   the extension only displays the current data in the popularPageCounts table.
+
