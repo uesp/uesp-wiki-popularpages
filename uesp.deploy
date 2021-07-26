@@ -13,6 +13,7 @@ ignore = .git*
 dest = content1.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
 dest = content2.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
 dest = content3.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
+dest = squid1.uesp.net:/home/uesp/popularPageCounts/
 destname = [backup]backup1.uesp.net:/home/uesp/www/w/extensions/RecentPopularPages/
 destname = [dev]content3.uesp.net:/home/uesp/dev/www/w/extensions/RecentPopularPages/
 
