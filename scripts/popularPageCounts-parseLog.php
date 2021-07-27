@@ -1,15 +1,21 @@
 <?php
 
 
-	// TODO: UESP specific
-require_once("/home/uesp/secrets/wiki.secrets");
-
-
 class CPopularPageCountsVarnishLogParser 
 {
-	public $SHOW_PROGRESS_LINECOUNT = 10000;	// Show parsing progress every X lines
-	public $SHOW_UNMATCHED_LINES = false;		// Prints message to stdout if line is not parsed to a wiki page view (WARNING: Noisy)
-	public $MIN_COUNT_FOR_DATABASE = 5;			// Only save pages with this number of counts or higher in the database
+	public $SHOW_PROGRESS_LINECOUNT = 10000;			// Show parsing progress every X lines
+	public $SHOW_UNMATCHED_LINES = false;				// Prints message to stdout if line is not parsed to a wiki page view (WARNING: Noisy)
+	public $MIN_COUNT_FOR_DATABASE = 5;					// Only save pages with this number of counts or higher in the database
+	public $HOST_REGEX = '/uesp\.net$/i';				// Regex to match your host domain name
+	public $ACCESS_LOG_DATEFORMAT = "d/M/Y:H:i:s O";	// Access log date format as used by date_create_from_format() 
+	
+		/*
+		 *  Regex used to match/parse access log lines. The following named groups are expected:
+		 *  		ip, time, action, url
+		 *  The following groups are optional:
+		 *  		code, length
+		 */
+	public $ACCESS_LOG_REGEX = '/(?P<ip>.*) \[(?P<time>.*)\] "(?P<action>[A-Za-z0-9\-_]+) (?P<url>.*) HTTP.*" (?P<code>.*) (?P<length>.*)/'; 
 	
 	public $BLACKLIST_PAGES = array(			// List of regexes used to ignore parsed wiki pages by their page name
 		'/APP NEXUS IMP TRACKER/i',
@@ -50,26 +56,30 @@ class CPopularPageCountsVarnishLogParser
 	protected $summaryCounts = [];
 	
 	protected $db = null;
+	protected $dbUser = null;
+	protected $dbPassword = null;
+	protected $dbHost = null;
+	protected $dbDatabase = null;
 	
 	protected $lastParseTimestamp = -1;
 	
 	
-	public function __construct()
+	public function __construct($dbHost, $dbUser, $dbPassword, $dbDatabase)
 	{
+		$this->dbHost = $dbHost;
+		$this->dbUser = $dbUser;
+		$this->dbPassword = $dbPassword;
+		$this->dbDatabase = $dbDatabase;
+		
 		$this->LoadInfoFromDatabase();
 	}
 	
 	
 	protected function GetDatabase()
 	{
-		global $uespWikiDB;
-		global $uespWikiUser;
-		global $uespWikiPW;
-		global $UESP_SERVER_DB1;
-		
 		if ($this->db) return $this->db;
 		
-		$this->db = new mysqli($UESP_SERVER_DB1, $uespWikiUser, $uespWikiPW, $uespWikiDB);
+		$this->db = new mysqli($this->dbHost, $this->dbUser, $this->dbPassword, $this->dbDatabase);
 		
 		if ($this->db->connect_errno)
 		{
@@ -227,9 +237,8 @@ class CPopularPageCountsVarnishLogParser
 	
 	protected function ParseDate($date)
 	{
-			// TODO: Depends on date format used in log 
 			// Varnish: 22/Jul/2021:12:33:31 -0400
-		$newDate = date_create_from_format("d/M/Y:H:i:s O", $date);
+		$newDate = date_create_from_format($this->ACCESS_LOG_DATEFORMAT, $date);
 		return $newDate;
 	}
 	
@@ -251,8 +260,7 @@ class CPopularPageCountsVarnishLogParser
 		$urlParts['wikispecial'] = '';
 		$urlParts['domain'] = $urlParts['host'];
 		
-			//TODO: This is UESP specific
-		if ($urlParts['host'] == "localhost" || preg_match('/uesp\.net$/i', $urlParts['host']))
+		if ($urlParts['host'] == "localhost" || preg_match($this->HOST_REGEX, $urlParts['host']))
 		{
 			if (preg_match('#^/wiki/#', $urlParts['path']))
 			{
@@ -403,8 +411,7 @@ class CPopularPageCountsVarnishLogParser
 	
 	protected function ParseLogLine($line)
 	{
-			// TODO: This depends on the exact log format used
-		$isMatched = preg_match('/(.*) \[(.*)\] "([A-Za-z0-9\-_]+) (.*) HTTP.*" (.*) (.*)/', $line, $matches);
+		$isMatched = preg_match($this->ACCESS_LOG_REGEX, $line, $matches);
 		
 		if (!$isMatched)
 		{
@@ -412,12 +419,12 @@ class CPopularPageCountsVarnishLogParser
 			return false;
 		}
 		
-		$ipAddress = $matches[1];
-		$time = $matches[2];
-		$action = $matches[3];
-		$url = $matches[4];
-		$httpCode = $matches[5];
-		$contentLength = $matches[6];
+		$ipAddress = $matches['ip'];
+		$time = $matches['time'];
+		$action = $matches['action'];
+		$url = $matches['url'];
+		$httpCode = $matches['code'];
+		$contentLength = $matches['length'];
 		
 		$date = $this->ParseDate($time);
 		$this->currentLineDate = $date;
