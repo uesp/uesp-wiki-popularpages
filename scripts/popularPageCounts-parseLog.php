@@ -11,8 +11,28 @@ class CPopularPageCountsVarnishLogParser
 	public $SHOW_UNMATCHED_LINES = false;		// Prints message to stdout if line is not parsed to a wiki page view (WARNING: Noisy)
 	public $MIN_COUNT_FOR_DATABASE = 5;			// Only save pages with this number of counts or higher in the database
 	
+	public $BLACKLIST_PAGES = array(			// List of regexes used to ignore parsed wiki pages by their page name
+		'/APP NEXUS IMP TRACKER/i',
+		'/^Mraid.js$/i',
+		'/^None$/i',
+		'/^Undefined$/i',
+	);
+	
 	public $BLACKLIST_NAMESPACES = array(		// List of regexes used to ignore parsed wiki pages by their namespace
 			'/https$/i',
+			'/now\(\)/i',
+			'/select\(/i',
+			'/convert\(/i',
+			'/\{/i',
+			'/\}/i',
+			'/waitfor delay/i',
+			'/"/i',
+			'/=/i',
+			'/®/i',
+			'/£/i',
+			'/§/i',
+			'/Ù/i',
+			'/^\$/i',
 	);
 	
 	protected $currentLineNumber = 1;
@@ -23,6 +43,7 @@ class CPopularPageCountsVarnishLogParser
 	protected $firstLineDate = null;
 	protected $lastLineDate = null;
 	
+	protected $pageNames = [];
 	protected $pageCounts = [];
 	protected $badUrlCounts = [];
 	protected $summaryCounts = [];
@@ -165,6 +186,17 @@ class CPopularPageCountsVarnishLogParser
 	}
 	
 	
+	protected function IsPageBlacklist($page)
+	{
+		foreach ($this->BLACKLIST_PAGES as $blacklist)
+		{
+			if (preg_match($blacklist, $page)) return true;
+		}
+		
+		return false;
+	}
+	
+	
 	protected function IsNamespaceBlacklist($namespace)
 	{
 		foreach ($this->BLACKLIST_NAMESPACES as $blacklist)
@@ -247,7 +279,6 @@ class CPopularPageCountsVarnishLogParser
 				$urlParts['wikipage'] = preg_replace('/_Talk$/', ' talk', $urlParts['wikipage']);
 				$urlParts['wikipage'] = preg_replace('/ Talk$/', ' talk', $urlParts['wikipage']);
 				$urlParts['wikipage'] = str_replace('_', ' ', $urlParts['wikipage']);
-				$urlParts['wikipage'] = ucwords($urlParts['wikipage']);
 				
 				$pageParts = explode(":", $urlParts['wikipage'], 2);
 				
@@ -341,6 +372,12 @@ class CPopularPageCountsVarnishLogParser
 			return false;
 		}
 		
+		if ($this->IsPageBlacklist($title))
+		{
+			if ($this->SHOW_UNMATCHED_LINES) print("\t{$this->currentLineNumber}: Title '$title' is blacklisted: $url\n");
+			return false;
+		}
+		
 		if ($this->IsNamespaceBlacklist($namespace))
 		{
 			if ($this->SHOW_UNMATCHED_LINES) print("\t{$this->currentLineNumber}: Namespace '$namespace' is blacklisted: $url\n");
@@ -429,6 +466,7 @@ class CPopularPageCountsVarnishLogParser
 			if ($this->SHOW_PROGRESS_LINECOUNT > 0 && $this->currentLineNumber % $this->SHOW_PROGRESS_LINECOUNT == 0)
 			{
 				print("\t{$this->currentLineNumber}: Parsing Line...\n");
+				if ($this->db) $this->db->ping();
 			}
 			
 			$this->ParseLogLine($line);
@@ -449,6 +487,8 @@ class CPopularPageCountsVarnishLogParser
 		}
 		
 		print("Found a total of {$this->totalWikiViewsFound} wiki views and {$this->totalWikiSpecialsFound} special views in {$this->currentLineNumber} lines of log data.\n");
+		
+		if ($this->db) $this->db->ping();
 		
 		fclose($file);
 		return true;

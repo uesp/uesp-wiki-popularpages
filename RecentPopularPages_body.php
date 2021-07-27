@@ -12,11 +12,12 @@ class RecentPopularPagesPage extends SpecialPage
 {
 	
 	public $pageCountData = array();
+	public $pageNames = array();
 	
 	public $showSummary = false;
 	public $pageFilter = "";
 	public $pageCountDays = 1;				// Time range in days
-	public $pageCountLimit = 500;
+	public $pageCountLimit = 2500;
 	public $lastParseTimestamp = -1;
 	
 	
@@ -26,31 +27,31 @@ class RecentPopularPagesPage extends SpecialPage
 	}
 	
 	
-	function getName() 
+	function getName()
 	{
 		return 'RecentPopularPages';
 	}
 	
 	
-	function isCacheable() 
+	function isCacheable()
 	{
 		return false;
 	}
 	
 	
-	function isExpensive() 
+	function isExpensive()
 	{
 		return false;
 	}
 	
 	
-	function isSyndicated() 
+	function isSyndicated()
 	{
 		return false;
 	}
 	
 	
-	function getGroupName() 
+	function getGroupName()
 	{
 		return 'pages';
 	}
@@ -96,7 +97,7 @@ class RecentPopularPagesPage extends SpecialPage
 	{
 		$dbr = wfGetDB( DB_SLAVE );
 		
-		$pageDays = $this->pageCountDays + 0.5;
+		$pageDays = $this->pageCountDays;
 		
 		$where = array("pageDate >= NOW() - INTERVAL $pageDays DAY");
 		if ($this->pageFilter) $where[] = "pageName LIKE ".$dbr->addQuotes('%'.$this->pageFilter.'%')."";
@@ -109,10 +110,13 @@ class RecentPopularPagesPage extends SpecialPage
 		{
 			$name = $row->pageName;
 			$count = $row->pageCount;
+			$lowerName = strtolower($name);
 			
-			$this->pageCountData[$name] += $count;
+			$this->pageNames[$lowerName][$name] += 1;
+			$this->pageCountData[$lowerName] += $count;
 		}
 		
+		$this->fixPageNames();
 	}
 	
 	
@@ -120,7 +124,7 @@ class RecentPopularPagesPage extends SpecialPage
 	{
 		$dbr = wfGetDB( DB_SLAVE );
 		
-		$pageDays = $this->pageCountDays + 0.5;
+		$pageDays = $this->pageCountDays;
 		
 		$where = array("pageDate >= NOW() - INTERVAL $pageDays DAY");
 		if ($this->pageFilter) $where[] = "pageName LIKE ".$dbr->addQuotes('%'.$this->pageFilter.'%')."";
@@ -133,10 +137,46 @@ class RecentPopularPagesPage extends SpecialPage
 		{
 			$name = $row->pageName;
 			$count = $row->pageCount;
+			$lowerName = strtolower($name);
 			
-			$this->pageCountData[$name] += $count;
+			$this->pageNames[$lowerName][$name] += 1;
+			$this->pageCountData[$lowerName] += $count;
 		}
 		
+		$this->fixPageNames();
+	}
+	
+	
+	function findMostUsedName($nameCounts)
+	{
+		if ($nameCounts == null) return "";
+		
+		$maxName = "";
+		$maxCounts = -1;
+		
+		foreach ($nameCounts as $name => $count)
+		{
+			if ($count > $maxCounts)
+			{
+				$maxName = $name;
+				$maxCounts = $count;
+			}
+		}
+		
+		return $maxName;
+	}
+	
+	
+	function fixPageNames()
+	{
+		$countData = $this->pageCountData;
+		$this->pageCountData = array();
+		
+		foreach ($countData as $lowerName => $count)
+		{
+			$name = $this->findMostUsedName($this->pageNames[$lowerName]);
+			$this->pageCountData[$name] += $count;
+		}
 	}
 	
 	
@@ -228,6 +268,7 @@ class RecentPopularPagesPage extends SpecialPage
 		
 		foreach ($this->pageCountData as $name => $count)
 		{
+			$count = number_format($count);
 			$safeName = htmlspecialchars($name, ENT_QUOTES);
 			
 			if ($this->showSummary)

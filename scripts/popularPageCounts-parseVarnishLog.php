@@ -12,6 +12,14 @@ $parser->SHOW_UNMATCHED_LINES = false;
 $parser->MIN_COUNT_FOR_DATABASE = 5;
 
 	/* Parse logs */
+$parser->ParseLog("/var/log/varnish/access.log-20210719");
+$parser->ParseLog("/var/log/varnish/access.log-20210720");
+$parser->ParseLog("/var/log/varnish/access.log-20210721");
+$parser->ParseLog("/var/log/varnish/access.log-20210722");
+$parser->ParseLog("/var/log/varnish/access.log-20210723");
+$parser->ParseLog("/var/log/varnish/access.log-20210724");
+$parser->ParseLog("/var/log/varnish/access.log-20210725");
+$parser->ParseLog("/var/log/varnish/access.log-20210726");
 $parser->ParseLog("/var/log/varnish/access.log");
 
 	/* Optionally save raw counts to text files */
