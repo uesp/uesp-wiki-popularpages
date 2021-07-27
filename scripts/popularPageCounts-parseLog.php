@@ -16,6 +16,7 @@ class CPopularPageCountsVarnishLogParser
 		'/^Mraid.js$/i',
 		'/^None$/i',
 		'/^Undefined$/i',
+		'/^\$/i',
 	);
 	
 	public $BLACKLIST_NAMESPACES = array(		// List of regexes used to ignore parsed wiki pages by their namespace
