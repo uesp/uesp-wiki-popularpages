@@ -12,6 +12,7 @@ This extension has 2 main components:
  
  Basic features include:
   - Display of page views sorted by most to least.
+  - View data from the last day/week/month/year.
   - Display page views or summaries including by namespace, domain, or other.
   - Basic filtering of results by name.
 
