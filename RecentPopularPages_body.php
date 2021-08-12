@@ -102,7 +102,7 @@ class RecentPopularPagesPage extends SpecialPage
 		$where = array("pageDate >= NOW() - INTERVAL $pageDays DAY");
 		if ($this->pageFilter) $where[] = "pageName LIKE ".$dbr->addQuotes('%'.$this->pageFilter.'%')."";
 		
-		$res = $dbr->select("popularPageCounts", array('pageName', 'pageDate', 'pageCount'), $where, __METHOD__, array('ORDER BY' => 'pageCount DESC', 'LIMIT' => $this->pageCountLimit));
+		$res = $dbr->select("popularPageCounts", array('pageName', 'pageDate', 'pageCount'), $where, __METHOD__, array('LIMIT' => $this->pageCountLimit));
 		
 		$this->pageCountData = array();
 		
@@ -115,6 +115,8 @@ class RecentPopularPagesPage extends SpecialPage
 			$this->pageNames[$lowerName][$name] += 1;
 			$this->pageCountData[$lowerName] += $count;
 		}
+		
+		arsort($this->pageCountData);
 		
 		$this->fixPageNames();
 	}
@@ -129,7 +131,7 @@ class RecentPopularPagesPage extends SpecialPage
 		$where = array("pageDate >= NOW() - INTERVAL $pageDays DAY");
 		if ($this->pageFilter) $where[] = "pageName LIKE ".$dbr->addQuotes('%'.$this->pageFilter.'%')."";
 		
-		$res = $dbr->select("popularPageSummaries", array('pageName', 'pageDate', 'pageCount'), $where, __METHOD__, array('ORDER BY' => 'pageCount DESC', 'LIMIT' => $this->pageCountLimit));
+		$res = $dbr->select("popularPageSummaries", array('pageName', 'pageDate', 'pageCount'), $where, __METHOD__, array('LIMIT' => $this->pageCountLimit));
 		
 		$this->pageCountData = array();
 		
@@ -142,6 +144,8 @@ class RecentPopularPagesPage extends SpecialPage
 			$this->pageNames[$lowerName][$name] += 1;
 			$this->pageCountData[$lowerName] += $count;
 		}
+		
+		arsort($this->pageCountData);
 		
 		$this->fixPageNames();
 	}
